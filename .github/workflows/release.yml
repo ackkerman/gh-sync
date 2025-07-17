@@ -16,25 +16,27 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            name: gh-sync-linux
+            target: x86_64-unknown-linux-gnu
+            artifact: gh-sync-linux
           - os: macos-latest
-            name: gh-sync-macos
+            target: x86_64-apple-darwin
+            artifact: gh-sync-macos
           - os: windows-latest
-            name: gh-sync-windows.exe
+            target: x86_64-pc-windows-msvc
+            artifact: gh-sync-windows.exe
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions-rs/toolchain@v1
         with:
-          python-version: '3.x'
-      - name: Install dependencies
-        run: pip install pyinstaller
-      - name: Build binary
-        run: pyinstaller --onefile -n ${{ matrix.name }} -p src gh_sync/cli.py
+          toolchain: stable
+          override: true
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: dist/${{ matrix.name }}
+          name: ${{ matrix.artifact }}
+          path: target/${{ matrix.target }}/release/gh-sync*
   release:
     name: Create release
     needs: build
@@ -52,4 +54,3 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-

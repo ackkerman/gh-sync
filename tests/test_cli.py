@@ -1,0 +1,35 @@
+from pathlib import Path
+from unittest.mock import patch
+
+from click.testing import CliRunner
+
+from gh_sync.cli import cli
+
+
+def _mock_run_success(*_, **__):
+    class R:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+    return R()
+
+
+def test_connect_and_list(runner: CliRunner):
+    with patch("gh_sync.gitops.subprocess.run", _mock_run_success):
+        res = runner.invoke(cli, ["connect", "web-app", "git@github.com:a/b.git", "--branch", "dev_ui"])
+        assert res.exit_code == 0
+        assert "Connected" in res.output
+
+        res = runner.invoke(cli, ["list"])
+        assert "web-app" in res.output
+        assert "git@github.com:a/b.git" in res.output
+
+
+def test_pull_and_push(runner: CliRunner):
+    with patch("gh_sync.gitops.subprocess.run", _mock_run_success):
+        runner.invoke(cli, ["connect", "web-app", "git@github.com:a/b.git"])
+        res = runner.invoke(cli, ["pull", "web-app"])
+        assert "Pulled" in res.output
+
+        res = runner.invoke(cli, ["push", "web-app"])
+        assert "Pushed" in res.output

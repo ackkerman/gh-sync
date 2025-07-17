@@ -27,7 +27,7 @@ pipx install git+https://github.com/ackkerman/gh-sync
 
 ```bash
 # Register a mapping (once)
-gh sync connect web-app git@github.com:ackkerman/ibm-nlo.git --branch dev_ui
+gh sync connect web-app git@github.com:ackkerman/nlo.git --branch dev_ui
 
 # Pull updates from the remote
 gh sync pull web-app

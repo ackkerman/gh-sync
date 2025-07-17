@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "gh-sync"
 version = "0.1.0"
-description = "Git subtree helper CLI"
-authors = ["Your Name <you@example.com>"]
+description = "GitHub Enterprise ↔ GitHub.com subtree sync tool"
+authors = ["ackkerman <smileyjoies@gmail.com>"]
 readme = "README.md"
 packages = [{include = "gh_sync", from = "src"}]
 

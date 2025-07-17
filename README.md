@@ -14,13 +14,13 @@ These commands make it straightforward to synchronize only a portion of a large 
 ## Installation
 
 ```bash
-gh extension install <your-namespace>/gh-sync
+gh extension install ackkerman/gh-sync
 ```
 
 or install directly with pipx:
 
 ```bash
-pipx install git+https://github.com/<your-namespace>/gh-sync
+pipx install git+https://github.com/ackkerman/gh-sync
 ```
 
 ## Usage

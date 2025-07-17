@@ -14,6 +14,15 @@ def _mock_run_success(*_, **__):
     return R()
 
 
+def _mock_run_fail(*args, **kwargs):
+    class R:
+        returncode = 1
+        stdout = ""
+        stderr = "boom"
+
+    return R()
+
+
 def test_connect_and_list(runner: CliRunner):
     with patch("gh_sync.gitops.subprocess.run", _mock_run_success):
         res = runner.invoke(cli, ["connect", "web-app", "git@github.com:a/b.git", "--branch", "dev_ui"])
@@ -59,3 +68,27 @@ def test_pull_first_time_adds_subtree(runner: CliRunner):
         assert res.exit_code == 0
         assert "Pulled" in res.output
         assert any(tuple(cmd[:3]) == ("git", "subtree", "add") for cmd in calls)
+
+
+def test_pull_failure_shows_message(runner: CliRunner):
+    with patch("gh_sync.gitops.subprocess.run", _mock_run_success):
+        runner.invoke(cli, ["connect", "web-app", "git@github.com:a/b.git"])
+
+    with patch("gh_sync.gitops.subprocess.run", _mock_run_fail):
+        res = runner.invoke(cli, ["pull", "web-app"])
+        assert res.exit_code == 1
+        assert "git fetch" in res.output
+        assert "boom" in res.output
+        assert "Traceback" not in res.output
+
+
+def test_push_failure_shows_message(runner: CliRunner):
+    with patch("gh_sync.gitops.subprocess.run", _mock_run_success):
+        runner.invoke(cli, ["connect", "web-app", "git@github.com:a/b.git"])
+
+    with patch("gh_sync.gitops.subprocess.run", _mock_run_fail):
+        res = runner.invoke(cli, ["push", "web-app"])
+        assert res.exit_code == 1
+        assert "git subtree push" in res.output
+        assert "boom" in res.output
+        assert "Traceback" not in res.output

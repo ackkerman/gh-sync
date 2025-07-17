@@ -7,7 +7,13 @@ from typing import Optional
 import click
 
 from gh_sync.config import Config, Mapping
-from gh_sync.gitops import ensure_remote, fetch, subtree_pull, subtree_push
+from gh_sync.gitops import (
+    GitCmdError,
+    ensure_remote,
+    fetch,
+    subtree_pull,
+    subtree_push,
+)
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -55,8 +61,12 @@ def pull(subdir: str, branch: Optional[str]) -> None:
 
     m = cfg.mappings[subdir]
     branch = branch or m.branch
-    fetch(repo, m.remote, branch)
-    subtree_pull(repo, m.subdir, m.remote, branch)
+    try:
+        fetch(repo, m.remote, branch)
+        subtree_pull(repo, m.subdir, m.remote, branch)
+    except GitCmdError as e:
+        click.echo(str(e), err=True)
+        sys.exit(1)
     click.echo(f"Pulled {subdir} from {m.remote}/{branch}")
 
 
@@ -72,7 +82,11 @@ def push(subdir: str, branch: Optional[str]) -> None:
         sys.exit(1)
     m = cfg.mappings[subdir]
     branch = branch or m.branch
-    subtree_push(repo, m.subdir, m.remote, branch)
+    try:
+        subtree_push(repo, m.subdir, m.remote, branch)
+    except GitCmdError as e:
+        click.echo(str(e), err=True)
+        sys.exit(1)
     click.echo(f"Pushed {subdir} to {m.remote}/{branch}")
 
 

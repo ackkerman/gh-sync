@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: gh-sync-linux
+          - os: macos-latest
+            name: gh-sync-macos
+          - os: windows-latest
+            name: gh-sync-windows.exe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install pyinstaller
+      - name: Build binary
+        run: pyinstaller --onefile -n ${{ matrix.name }} -p src gh_sync/cli.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: dist/${{ matrix.name }}
+  release:
+    name: Create release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./artifacts/*/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+

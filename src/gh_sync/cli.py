@@ -46,7 +46,7 @@ def connect(subdir: str, remote_url: str, branch: str, remote_name: Optional[str
 @click.argument("subdir", type=click.Path(file_okay=False))
 @click.option("--branch", default=None, help="override branch")
 def pull(subdir: str, branch: Optional[str]) -> None:
-    """Fetch & subtree pull."""
+    """Fetch & subtree pull; auto-add if subtree is missing."""
     repo = Path(".").resolve()
     cfg = _load(repo)
     if subdir not in cfg.mappings:

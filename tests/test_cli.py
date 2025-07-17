@@ -33,3 +33,29 @@ def test_pull_and_push(runner: CliRunner):
 
         res = runner.invoke(cli, ["push", "web-app"])
         assert "Pushed" in res.output
+
+
+def test_pull_first_time_adds_subtree(runner: CliRunner):
+    calls = []
+
+    def _mock_run(cmd, cwd=None, check=False, text=True, capture_output=True):
+        calls.append(cmd)
+
+        class R:
+            stdout = ""
+            stderr = ""
+
+        r = R()
+        if tuple(cmd[:3]) == ("git", "subtree", "pull"):
+            r.returncode = 1
+            r.stderr = "fatal: can't squash-merge: 'web-app' was never added."
+        else:
+            r.returncode = 0
+        return r
+
+    with patch("gh_sync.gitops.subprocess.run", _mock_run):
+        runner.invoke(cli, ["connect", "web-app", "git@github.com:a/b.git"])
+        res = runner.invoke(cli, ["pull", "web-app"])
+        assert res.exit_code == 0
+        assert "Pulled" in res.output
+        assert any(tuple(cmd[:3]) == ("git", "subtree", "add") for cmd in calls)

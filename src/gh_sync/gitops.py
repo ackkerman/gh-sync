@@ -35,14 +35,39 @@ def fetch(repo: Path, remote: str, branch: str) -> None:
 
 
 def subtree_pull(repo: Path, prefix: str, remote: str, branch: str) -> None:
-    """Run ``git subtree pull``; auto-add on first invocation."""
+    """Run ``git subtree pull``; auto-add prefix if missing."""
     try:
-        _run(("git", "subtree", "pull", "--prefix", prefix, remote, branch, "--squash"), repo)
+        _run(
+            (
+                "git",
+                "subtree",
+                "pull",
+                "--prefix",
+                prefix,
+                remote,
+                branch,
+                "--squash",
+            ),
+            repo,
+        )
     except GitCmdError as e:
-        if "was never added" in str(e):
-            _run(("git", "subtree", "add", "--prefix", prefix, remote, branch, "--squash"), repo)
+        if "use 'git subtree add'" in str(e):
+            _run(
+                (
+                    "git",
+                    "subtree",
+                    "add",
+                    "--prefix",
+                    prefix,
+                    remote,
+                    branch,
+                    "--squash",
+                ),
+                repo,
+            )
         else:
             raise
+
 
 
 def subtree_push(repo: Path, prefix: str, remote: str, branch: str) -> None:

@@ -44,30 +44,46 @@ def test_pull_and_push(runner: CliRunner):
         assert "Pushed" in res.output
 
 
-def test_pull_first_time_adds_subtree(runner: CliRunner):
+def test_pull_runs_add_on_missing_subtree(runner: CliRunner):
     calls = []
 
-    def _mock_run(cmd, cwd=None, check=False, text=True, capture_output=True):
+    def fake_run(cmd, cwd, check=False, text=True, capture_output=True):
         calls.append(cmd)
 
         class R:
             stdout = ""
             stderr = ""
 
-        r = R()
         if tuple(cmd[:3]) == ("git", "subtree", "pull"):
-            r.returncode = 1
-            r.stderr = "fatal: can't squash-merge: 'web-app' was never added."
+            R.returncode = 1
+            R.stderr = "fatal: 'web-app' does not exist; use 'git subtree add'"
         else:
-            r.returncode = 0
-        return r
+            R.returncode = 0
+        return R()
 
-    with patch("gh_sync.gitops.subprocess.run", _mock_run):
+    with patch("gh_sync.gitops.subprocess.run", side_effect=fake_run):
         runner.invoke(cli, ["connect", "web-app", "git@github.com:a/b.git"])
         res = runner.invoke(cli, ["pull", "web-app"])
         assert res.exit_code == 0
-        assert "Pulled" in res.output
-        assert any(tuple(cmd[:3]) == ("git", "subtree", "add") for cmd in calls)
+        assert (
+            "git",
+            "subtree",
+            "add",
+            "--prefix",
+            "web-app",
+            "b",
+            "main",
+            "--squash",
+        ) in calls or [
+            "git",
+            "subtree",
+            "add",
+            "--prefix",
+            "web-app",
+            "b",
+            "main",
+            "--squash",
+        ] in calls
 
 
 def test_pull_failure_shows_message(runner: CliRunner):

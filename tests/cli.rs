@@ -27,7 +27,7 @@ fn setup_repo() -> tempfile::TempDir {
 fn fake_git_path(dir: &tempfile::TempDir) -> PathBuf {
     #[cfg(windows)]
     {
-        let src = PathBuf::from(env!("OUT_DIR")).join("git_shim.exe");
+        let src = PathBuf::from(env!("GIT_SHIM_BIN"));
         let dst = dir.path().join("git.exe");
         fs::copy(src, &dst).unwrap();
         return dst;
@@ -51,7 +51,7 @@ fn fake_git_path(dir: &tempfile::TempDir) -> PathBuf {
 fn fake_git_fail_pull(dir: &tempfile::TempDir) -> PathBuf {
     #[cfg(windows)]
     {
-        let src = PathBuf::from(env!("OUT_DIR")).join("git_fail_pull.exe");
+        let src = PathBuf::from(env!("GIT_SHIM_BIN"));
         let dst = dir.path().join("git.exe");
         fs::copy(src, &dst).unwrap();
         return dst;
@@ -125,7 +125,11 @@ fn pull_falls_back_to_add() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&["connect", "app", "git@github.com:ackkerman/spinning_donut.rs.git"])
+        .args(&[
+            "connect",
+            "app",
+            "git@github.com:ackkerman/spinning_donut.rs.git",
+        ])
         .assert()
         .success();
 
@@ -153,7 +157,11 @@ fn pull_with_custom_message() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&["connect", "app", "git@github.com:ackkerman/spinning_donut.rs.git"])
+        .args(&[
+            "connect",
+            "app",
+            "git@github.com:ackkerman/spinning_donut.rs.git",
+        ])
         .assert()
         .success();
 
@@ -180,7 +188,11 @@ fn remove_mapping() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&["connect", "app", "git@github.com:ackkerman/spinning_donut.rs.git"])
+        .args(&[
+            "connect",
+            "app",
+            "git@github.com:ackkerman/spinning_donut.rs.git",
+        ])
         .assert()
         .success();
 
@@ -204,4 +216,3 @@ fn remove_mapping() {
         .success()
         .stdout(predicate::str::contains("No mappings"));
 }
-

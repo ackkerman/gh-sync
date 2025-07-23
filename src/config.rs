@@ -41,15 +41,15 @@ impl Config {
                 }
                 if let Some(name) = parts.next() {
                     if let Some(field) = parts.next() {
-                        let entry = cfg
-                            .mappings
-                            .entry(name.to_string())
-                            .or_insert_with(|| Mapping {
-                                subdir: name.to_string(),
-                                remote: String::new(),
-                                url: String::new(),
-                                branch: String::new(),
-                            });
+                        let entry =
+                            cfg.mappings
+                                .entry(name.to_string())
+                                .or_insert_with(|| Mapping {
+                                    subdir: name.to_string(),
+                                    remote: String::new(),
+                                    url: String::new(),
+                                    branch: String::new(),
+                                });
                         match field {
                             "remote" => entry.remote = value.to_string(),
                             "url" => entry.url = value.to_string(),

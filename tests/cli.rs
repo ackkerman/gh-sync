@@ -96,7 +96,7 @@ fn connect_and_list_roundtrip() {
         .args(&[
             "connect",
             "app",
-            "git@github.com:ackkerman/spinning_donut.rs.git",
+            "git@github.com:a/b.gitt",
             "--branch",
             "dev_ui",
         ])
@@ -128,7 +128,7 @@ fn pull_falls_back_to_add() {
         .args(&[
             "connect",
             "app",
-            "git@github.com:ackkerman/spinning_donut.rs.git",
+            "git@github.com:a/b.gitt",
         ])
         .assert()
         .success();
@@ -160,7 +160,7 @@ fn pull_with_custom_message() {
         .args(&[
             "connect",
             "app",
-            "git@github.com:ackkerman/spinning_donut.rs.git",
+            "git@github.com:a/b.gitt",
         ])
         .assert()
         .success();
@@ -191,7 +191,7 @@ fn remove_mapping() {
         .args(&[
             "connect",
             "app",
-            "git@github.com:ackkerman/spinning_donut.rs.git",
+            "git@github.com:a/b.gitt",
         ])
         .assert()
         .success();

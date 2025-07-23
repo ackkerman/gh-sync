@@ -12,11 +12,21 @@ fn main() {
         r#"
 use std::{env, process::{Command, exit}};
 fn main() {
-    let mut args = env::args().skip(1).collect::<Vec<_>>();
-    if args.first().map(|s| s == "config").unwrap_or(false) {
-        /* git config → 本物を叩く */
-        exit(Command::new("git.exe").args(&args).status().unwrap().code().unwrap_or(1));
-    }
+   let args: Vec<String> = env::args().skip(1).collect();
+   // helper: real git that bypasses this shim
+   fn real_git(args: &[String]) -> ! {
+       use std::process::{Command, exit};
+       // ORIG_PATH はテスト側で注入してある
+       let mut cmd = Command::new("git");
+       if let Ok(orig) = std::env::var("ORIG_PATH") {
+           cmd.env("PATH", orig);  // ← shim を除いた PATH に差し替え
+       }
+       let status = cmd.args(args).status().expect("spawn real git");
+       exit(status.code().unwrap_or(1));
+   }
+    if args.get(0).map(|s| s == "config").unwrap_or(false) {
+        real_git(&args);            // ← 本物へフォワードして終了
+   }
     if args.len() >= 3 && args[0] == "subtree" && args[1] == "pull" {
         eprintln!("hint: use 'git subtree add'");
         exit(1); // わざと失敗

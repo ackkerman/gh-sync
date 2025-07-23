@@ -1,53 +1,56 @@
 name: release
+
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
+
 permissions:
   contents: write
 
 jobs:
-  release:
-    name: Release binary for multi OS
+  build:
+    name: Build binaries
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            artifact: darwin-amd64
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            artifact: darwin-arm64
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            artifact: windows-amd64.exe
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
-            artifact: windows-arm64.exe
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: linux-amd64
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            artifact: linux-arm64
-
-    runs-on: ${{ matrix.os }}
-
+            artifact: gh-sync-linux
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: gh-sync-macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: gh-sync-windows.exe
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: ${{ matrix.target }}
-      - uses: actions-rs/cargo@v1
+          override: true
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          use-cross: true
-          command: build
-          args: --release --target ${{ matrix.target }}
-
-      - uses: cli/gh-extension-precompile@v1
+          name: ${{ matrix.artifact }}
+          path: target/${{ matrix.target }}/release/gh-sync*
+  release:
+    name: Create release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          build_script_override: "script/build.sh"
-        env:
-          TARGET: ${{ matrix.target }}
-          ARTIFACT: ${{ matrix.artifact }}
+          path: ./artifacts
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./artifacts/*/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true

@@ -226,3 +226,24 @@ fn connect_fails_on_git_config_error() {
         .failure()
         .stderr(predicate::str::contains("git config"));
 }
+
+#[test]
+fn connect_fails_on_git_config_error() {
+    let repo = setup_repo();
+    let git_shim = fake_git_fail_config(&repo);
+
+    let path_env = format!(
+        "{}:{}",
+        git_shim.parent().unwrap().display(),
+        std::env::var("PATH").unwrap()
+    );
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("git config"));
+}

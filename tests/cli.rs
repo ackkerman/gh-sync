@@ -109,6 +109,22 @@ fi
     shim
 }
 
+/// `git config` が失敗するシム
+fn fake_git_fail_config(dir: &tempfile::TempDir) -> std::path::PathBuf {
+    let shim = dir.path().join("git");
+    fs::write(
+        &shim,
+        "#!/usr/bin/env sh\nif [ \"$1\" = \"config\" ]; then\n    exit 1\nelse\n    echo git \"$@\"\n    exit 0\nfi\n",
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&shim, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    shim
+}
+
 #[test]
 fn connect_and_list_roundtrip() {
     let repo = setup_repo();
@@ -242,9 +258,9 @@ fn remove_mapping() {
 }
 
 #[test]
-fn connect_adds_remote_when_missing() {
+fn connect_fails_on_git_config_error() {
     let repo = setup_repo();
-    let git_shim = fake_git_remote_missing(&repo);
+    let git_shim = fake_git_fail_config(&repo);
 
     let path_env = format!(
         "{}:{}",
@@ -277,8 +293,29 @@ fn connect_updates_remote_url() {
         .unwrap()
         .current_dir(repo.path())
         .env("PATH", &path_env)
-        .args(&["connect", "web", "git@github.com:a/b.git"])
+        .args(&["connect", "web-app", "git@github.com:a/b.git"])
         .assert()
-        .success()
-        .stdout(predicate::str::contains("git remote set-url"));
+        .failure()
+        .stderr(predicate::str::contains("git config"));
+}
+
+#[test]
+fn connect_adds_remote_when_missing() {
+    let repo = setup_repo();
+    let git_shim = fake_git_remote_missing(&repo);
+
+    let path_env = format!(
+        "{}:{}",
+        git_shim.parent().unwrap().display(),
+        std::env::var("PATH").unwrap()
+    );
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("git config"));
 }

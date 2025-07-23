@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path, process::Command};
 
@@ -68,22 +69,31 @@ impl Config {
     pub fn save(&self, repo_root: &Path) -> anyhow::Result<()> {
         for (name, m) in &self.mappings {
             let key_remote = format!("{CONFIG_PREFIX}.{}.remote", name);
-            Command::new("git")
+            let status = Command::new("git")
                 .args(["config", "--local", "--replace-all", &key_remote, &m.remote])
                 .current_dir(repo_root)
                 .status()?;
+            if !status.success() {
+                return Err(anyhow!("git config failed to set {key_remote}"));
+            }
 
             let key_url = format!("{CONFIG_PREFIX}.{}.url", name);
-            Command::new("git")
+            let status = Command::new("git")
                 .args(["config", "--local", "--replace-all", &key_url, &m.url])
                 .current_dir(repo_root)
                 .status()?;
+            if !status.success() {
+                return Err(anyhow!("git config failed to set {key_url}"));
+            }
 
             let key_branch = format!("{CONFIG_PREFIX}.{}.branch", name);
-            Command::new("git")
+            let status = Command::new("git")
                 .args(["config", "--local", "--replace-all", &key_branch, &m.branch])
                 .current_dir(repo_root)
                 .status()?;
+            if !status.success() {
+                return Err(anyhow!("git config failed to set {key_branch}"));
+            }
         }
 
         Ok(())

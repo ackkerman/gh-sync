@@ -88,4 +88,16 @@ impl Config {
 
         Ok(())
     }
+
+    /// マッピングを削除
+    pub fn remove(&mut self, repo_root: &Path, subdir: &str) -> anyhow::Result<()> {
+        if self.mappings.remove(subdir).is_some() {
+            let section = format!("{CONFIG_PREFIX}.{}", subdir);
+            let _ = Command::new("git")
+                .args(["config", "--local", "--remove-section", &section])
+                .current_dir(repo_root)
+                .status();
+        }
+        Ok(())
+    }
 }

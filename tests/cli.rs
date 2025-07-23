@@ -6,7 +6,7 @@ use tempfile::tempdir;
 fn setup_repo() -> tempfile::TempDir {
     let dir = tempdir().unwrap();
     // 実際に git init して最低限のリポジトリを用意
-    std::process::Command::new("/usr/bin/git")
+    std::process::Command::new("git")
         .arg("init")
         .current_dir(dir.path())
         .output()
@@ -75,8 +75,8 @@ fn connect_and_list_roundtrip() {
         )
         .args(&[
             "connect",
-            "web-app",
-            "git@github.com:a/b.git",
+            "app",
+            "git@github.com:ackkerman/spinning_donut.rs.git",
             "--branch",
             "dev_ui",
         ])
@@ -90,7 +90,7 @@ fn connect_and_list_roundtrip() {
         .arg("list")
         .assert()
         .success()
-        .stdout(predicate::str::contains("web-app"));
+        .stdout(predicate::str::contains("app"));
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn pull_falls_back_to_add() {
         .unwrap()
         .current_dir(repo.path())
         .env("PATH", &path_env)
-        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .args(&["connect", "app", "git@github.com:ackkerman/spinning_donut.rs.git"])
         .assert()
         .success();
 
@@ -116,7 +116,7 @@ fn pull_falls_back_to_add() {
         .unwrap()
         .current_dir(repo.path())
         .env("PATH", &path_env)
-        .args(&["pull", "web-app"])
+        .args(&["pull", "app"])
         .assert()
         .success()
         .stdout(predicate::str::contains("subtree add"));
@@ -138,7 +138,7 @@ fn pull_with_custom_message() {
         .unwrap()
         .current_dir(repo.path())
         .env("PATH", &path_env)
-        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .args(&["connect", "app", "git@github.com:ackkerman/spinning_donut.rs.git"])
         .assert()
         .success();
 
@@ -146,7 +146,7 @@ fn pull_with_custom_message() {
         .unwrap()
         .current_dir(repo.path())
         .env("PATH", &path_env)
-        .args(&["pull", "web-app", "-m", "custom"])
+        .args(&["pull", "app", "-m", "custom"])
         .assert()
         .success()
         .stdout(predicate::str::contains("-m custom"));
@@ -167,7 +167,7 @@ fn remove_mapping() {
         .unwrap()
         .current_dir(repo.path())
         .env("PATH", &path_env)
-        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .args(&["connect", "app", "git@github.com:ackkerman/spinning_donut.rs.git"])
         .assert()
         .success();
 
@@ -175,7 +175,7 @@ fn remove_mapping() {
         .unwrap()
         .current_dir(repo.path())
         .env("PATH", &path_env)
-        .args(&["remove", "web-app"])
+        .args(&["remove", "app"])
         .assert()
         .success()
         .stdout(predicate::str::contains("Removed"));

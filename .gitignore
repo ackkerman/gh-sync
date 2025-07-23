@@ -201,5 +201,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-gh-sync
 
+
+
+# Added by cargo
+
+/target

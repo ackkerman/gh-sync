@@ -58,6 +58,57 @@ fi
     shim
 }
 
+/// `git remote get-url` を失敗させて remote add を強制させるシム
+fn fake_git_remote_missing(dir: &tempfile::TempDir) -> std::path::PathBuf {
+    let shim = dir.path().join("git");
+    fs::write(
+        &shim,
+        r#"#!/usr/bin/env sh
+if [ "$1" = "config" ]; then
+    /usr/bin/git "$@"
+elif [ "$1" = "remote" ] && [ "$2" = "get-url" ]; then
+    exit 1
+else
+    echo git "$@"
+    exit 0
+fi
+"#,
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&shim, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    shim
+}
+
+/// `git remote get-url` を成功させつつ異なる URL を返し、set-url を誘発するシム
+fn fake_git_remote_mismatch(dir: &tempfile::TempDir) -> std::path::PathBuf {
+    let shim = dir.path().join("git");
+    fs::write(
+        &shim,
+        r#"#!/usr/bin/env sh
+if [ "$1" = "config" ]; then
+    /usr/bin/git "$@"
+elif [ "$1" = "remote" ] && [ "$2" = "get-url" ]; then
+    echo https://example.com/other.git
+    exit 0
+else
+    echo git "$@"
+    exit 0
+fi
+"#,
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&shim, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    shim
+}
+
 #[test]
 fn connect_and_list_roundtrip() {
     let repo = setup_repo();
@@ -188,4 +239,46 @@ fn remove_mapping() {
         .assert()
         .success()
         .stdout(predicate::str::contains("No mappings"));
+}
+
+#[test]
+fn connect_adds_remote_when_missing() {
+    let repo = setup_repo();
+    let git_shim = fake_git_remote_missing(&repo);
+
+    let path_env = format!(
+        "{}:{}",
+        git_shim.parent().unwrap().display(),
+        std::env::var("PATH").unwrap()
+    );
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["connect", "web", "git@github.com:a/b.git"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("git remote add"));
+}
+
+#[test]
+fn connect_updates_remote_url() {
+    let repo = setup_repo();
+    let git_shim = fake_git_remote_mismatch(&repo);
+
+    let path_env = format!(
+        "{}:{}",
+        git_shim.parent().unwrap().display(),
+        std::env::var("PATH").unwrap()
+    );
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["connect", "web", "git@github.com:a/b.git"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("git remote set-url"));
 }

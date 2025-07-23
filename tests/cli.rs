@@ -26,37 +26,43 @@ fn setup_repo() -> tempfile::TempDir {
 /// `git` 実行を丸ごとエコーに差し替えて成功を偽装
 fn fake_git_path(dir: &tempfile::TempDir) -> PathBuf {
     #[cfg(windows)]
-    let shim = dir.path().join("git.cmd");
-    #[cfg(not(windows))]
-    let shim = dir.path().join("git");
-
-    let script = if cfg!(windows) {
-        "@echo off\r\nif \"%1\"==\"config\" (\r\n  set \"PATH=%ORIG_PATH%\"\r\n  git %*\r\n) else (\r\n  echo git %*\r\n  exit /b 0\r\n)"
-    } else {
-        "#!/usr/bin/env sh\nif [ \"$1\" = \"config\" ]; then\n  PATH=\"$ORIG_PATH\" git \"$@\"\nelse\n  echo git \"$@\"\nfi\n"
-    };
-
-    fs::write(&shim, script).unwrap();
-
-    #[cfg(unix)]
     {
+        let src = PathBuf::from(env!("OUT_DIR")).join("git_shim.exe");
+        let dst = dir.path().join("git.exe");
+        fs::copy(src, &dst).unwrap();
+        return dst;
+    }
+
+    #[cfg(not(windows))]
+    {
+        let shim = dir.path().join("git");
+        fs::write(
+            &shim,
+            "#!/usr/bin/env sh\nif [ \"$1\" = \"config\" ]; then\n  PATH=\"$ORIG_PATH\" git \"$@\"\nelse\n  echo git \"$@\"\nfi\n",
+        )
+        .unwrap();
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&shim, fs::Permissions::from_mode(0o755)).unwrap();
+        shim
     }
-    shim
 }
 
 /// `git subtree pull` を失敗させ、add へフォールバックさせるためのシム
 fn fake_git_fail_pull(dir: &tempfile::TempDir) -> PathBuf {
     #[cfg(windows)]
-    let shim = dir.path().join("git.cmd");
-    #[cfg(not(windows))]
-    let shim = dir.path().join("git");
+    {
+        let src = PathBuf::from(env!("OUT_DIR")).join("git_fail_pull.exe");
+        let dst = dir.path().join("git.exe");
+        fs::copy(src, &dst).unwrap();
+        return dst;
+    }
 
-    let script = if cfg!(windows) {
-        "@echo off\r\nif \"%1\"==\"config\" (\r\n  set \"PATH=%ORIG_PATH%\"\r\n  git %*\r\n) else if \"%1\"==\"remote\" if \"%2\"==\"get-url\" (\r\n  exit /b 1\r\n) else if \"%1\"==\"subtree\" if \"%2\"==\"pull\" (\r\n  echo hint: use 'git subtree add' 1>&2\r\n  exit /b 1\r\n) else (\r\n  echo git %*\r\n  exit /b 0\r\n)"
-    } else {
-        r#"#!/usr/bin/env sh
+    #[cfg(not(windows))]
+    {
+        let shim = dir.path().join("git");
+        fs::write(
+            &shim,
+            r#"#!/usr/bin/env sh
 if [ "$1" = "config" ]; then
   PATH="$ORIG_PATH" git "$@"
 elif [ "$1" = "remote" ] && [ "$2" = "get-url" ]; then
@@ -68,17 +74,13 @@ else
   echo git "$@"
   exit 0
 fi
-"#
-    };
-
-    fs::write(&shim, script).unwrap();
-
-    #[cfg(unix)]
-    {
+"#,
+        )
+        .unwrap();
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&shim, fs::Permissions::from_mode(0o755)).unwrap();
+        shim
     }
-    shim
 }
 
 #[test]

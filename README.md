@@ -13,14 +13,16 @@ These commands make it straightforward to synchronize only a portion of a large 
 
 ## Installation
 
+Install locally using Cargo:
+
 ```bash
-gh extension install ackkerman/gh-sync
+cargo install --path .
 ```
 
-or install directly with pipx:
+Or install as a GitHub CLI extension:
 
 ```bash
-pipx install git+https://github.com/ackkerman/gh-sync
+gh extension install ackkerman/gh-sync
 ```
 
 ## Usage

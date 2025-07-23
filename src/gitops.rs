@@ -48,23 +48,32 @@ pub fn fetch(repo: &Path, remote: &str, branch: &str) -> Result<()> {
     run(repo, &["fetch", remote, branch])
 }
 
-pub fn subtree_pull(repo: &Path, prefix: &str, remote: &str, branch: &str) -> Result<()> {
-    let out = run_output(
-        repo,
-        &[
-            "subtree", "pull", "--prefix", prefix, remote, branch, "--squash",
-        ],
-    )?;
+pub fn subtree_pull(
+    repo: &Path,
+    prefix: &str,
+    remote: &str,
+    branch: &str,
+    message: Option<&str>,
+) -> Result<()> {
+    let mut args = vec!["subtree", "pull", "--prefix", prefix, remote, branch];
+    if let Some(m) = message {
+        args.push("-m");
+        args.push(m);
+    }
+    args.push("--squash");
+
+    let out = run_output(repo, &args)?;
 
     if out.status.success() {
         Ok(())
     } else if String::from_utf8_lossy(&out.stderr).contains("use 'git subtree add'") {
-        run(
-            repo,
-            &[
-                "subtree", "add", "--prefix", prefix, remote, branch, "--squash",
-            ],
-        )
+        let mut add_args = vec!["subtree", "add", "--prefix", prefix, remote, branch];
+        if let Some(m) = message {
+            add_args.push("-m");
+            add_args.push(m);
+        }
+        add_args.push("--squash");
+        run(repo, &add_args)
     } else {
         Err(anyhow!(
             "git subtree pull failed: {}",

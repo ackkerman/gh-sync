@@ -32,6 +32,9 @@ enum Commands {
         subdir: String,
         #[arg(short, long)]
         branch: Option<String>,
+        /// merge commit message when pulling
+        #[arg(short, long)]
+        message: Option<String>,
     },
     /// subtree push
     Push {
@@ -89,7 +92,7 @@ fn run() -> Result<()> {
             println!("Connected {subdir} ↔ {remote_url} ({branch})");
         }
 
-        Commands::Pull { subdir, branch } => {
+        Commands::Pull { subdir, branch, message } => {
             let m = cfg
                 .mappings
                 .get(&subdir)
@@ -97,7 +100,7 @@ fn run() -> Result<()> {
 
             let branch = branch.unwrap_or_else(|| m.branch.clone());
             fetch(&repo, &m.remote, &branch)?;
-            subtree_pull(&repo, &m.subdir, &m.remote, &branch)?;
+            subtree_pull(&repo, &m.subdir, &m.remote, &branch, message.as_deref())?;
             println!("Pulled {subdir} from {}/{}", m.remote, branch);
         }
 

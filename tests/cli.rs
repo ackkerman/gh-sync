@@ -123,6 +123,36 @@ fn pull_falls_back_to_add() {
 }
 
 #[test]
+fn pull_with_custom_message() {
+    let repo = setup_repo();
+    // use failing pull shim so that fallback to add prints the command
+    let git_shim = fake_git_fail_pull(&repo);
+
+    let path_env = format!(
+        "{}:{}",
+        git_shim.parent().unwrap().display(),
+        std::env::var("PATH").unwrap()
+    );
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .assert()
+        .success();
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["pull", "web-app", "-m", "custom"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("-m custom"));
+}
+
+#[test]
 fn remove_mapping() {
     let repo = setup_repo();
     let git_shim = fake_git_path(&repo);

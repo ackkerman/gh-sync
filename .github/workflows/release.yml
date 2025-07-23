@@ -30,6 +30,8 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Add target
+        run: rustup target add ${{ matrix.target }}
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
       - name: Upload artifact

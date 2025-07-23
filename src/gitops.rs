@@ -52,13 +52,7 @@ pub fn subtree_pull(repo: &Path, prefix: &str, remote: &str, branch: &str) -> Re
     let out = run_output(
         repo,
         &[
-            "subtree",
-            "pull",
-            "--prefix",
-            prefix,
-            remote,
-            branch,
-            "--squash",
+            "subtree", "pull", "--prefix", prefix, remote, branch, "--squash",
         ],
     )?;
 
@@ -68,13 +62,7 @@ pub fn subtree_pull(repo: &Path, prefix: &str, remote: &str, branch: &str) -> Re
         run(
             repo,
             &[
-                "subtree",
-                "add",
-                "--prefix",
-                prefix,
-                remote,
-                branch,
-                "--squash",
+                "subtree", "add", "--prefix", prefix, remote, branch, "--squash",
             ],
         )
     } else {

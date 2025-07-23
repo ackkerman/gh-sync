@@ -41,15 +41,15 @@ impl Config {
                 }
                 if let Some(name) = parts.next() {
                     if let Some(field) = parts.next() {
-                        let entry = cfg
-                            .mappings
-                            .entry(name.to_string())
-                            .or_insert_with(|| Mapping {
-                                subdir: name.to_string(),
-                                remote: String::new(),
-                                url: String::new(),
-                                branch: String::new(),
-                            });
+                        let entry =
+                            cfg.mappings
+                                .entry(name.to_string())
+                                .or_insert_with(|| Mapping {
+                                    subdir: name.to_string(),
+                                    remote: String::new(),
+                                    url: String::new(),
+                                    branch: String::new(),
+                                });
                         match field {
                             "remote" => entry.remote = value.to_string(),
                             "url" => entry.url = value.to_string(),
@@ -86,6 +86,18 @@ impl Config {
                 .status()?;
         }
 
+        Ok(())
+    }
+
+    /// マッピングを削除
+    pub fn remove(&mut self, repo_root: &Path, subdir: &str) -> anyhow::Result<()> {
+        if self.mappings.remove(subdir).is_some() {
+            let section = format!("{CONFIG_PREFIX}.{}", subdir);
+            let _ = Command::new("git")
+                .args(["config", "--local", "--remove-section", &section])
+                .current_dir(repo_root)
+                .status();
+        }
         Ok(())
     }
 }

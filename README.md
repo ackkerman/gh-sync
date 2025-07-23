@@ -8,6 +8,7 @@ Synchronize a subdirectory of your repository with an external repository using 
 - **pull** – fetch from the remote and update the subtree
 - **push** – push local changes in the subtree back to the remote
 - **list** – show current mappings
+- **remove** – delete a mapping
 
 These commands make it straightforward to synchronize only a portion of a large repository with another repository.
 
@@ -37,6 +38,9 @@ gh sync push web-app
 
 # View mappings
 gh sync list
+
+# Remove a mapping
+gh sync remove web-app
 ```
 
 Mappings are stored in your repository's Git configuration under the `gh-sync` prefix. Multiple subdirectories can be managed.

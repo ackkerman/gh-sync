@@ -39,6 +39,8 @@ enum Commands {
         #[arg(short, long)]
         branch: Option<String>,
     },
+    /// SUBDIR のマッピングを削除
+    Remove { subdir: String },
     /// 現在のマッピングを表示
     List,
 }
@@ -107,6 +109,11 @@ fn run() -> Result<()> {
             let branch = branch.unwrap_or_else(|| m.branch.clone());
             subtree_push(&repo, &m.subdir, &m.remote, &branch)?;
             println!("Pushed {subdir} to {}/{}", m.remote, branch);
+        }
+
+        Commands::Remove { subdir } => {
+            cfg.remove(&repo, &subdir)?;
+            println!("Removed {subdir}");
         }
 
         Commands::List => {

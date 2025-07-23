@@ -49,10 +49,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
+      - name: Package assets
+        run: |
+          for dir in ./artifacts/*; do
+            name=$(basename "$dir")
+            tar -czf "${name}.tar.gz" -C "$dir" .
+          done
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./artifacts/*/*
+          files: |
+            gh-sync-*.tar.gz
           draft: false
           prerelease: false
           generate_release_notes: true

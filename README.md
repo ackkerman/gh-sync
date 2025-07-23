@@ -5,7 +5,7 @@ Synchronize a subdirectory of your repository with an external repository using 
 ## Features
 
 - **connect** – register a subdirectory ↔ remote URL mapping
-- **pull** – fetch from the remote and update the subtree
+- **pull** – fetch from the remote and update the subtree (supports `-m` for merge message)
 - **push** – push local changes in the subtree back to the remote
 - **list** – show current mappings
 - **remove** – delete a mapping
@@ -32,8 +32,8 @@ gh extension install ackkerman/gh-sync
 # Register a mapping (once)
 gh sync connect web-app git@github.com:ackkerman/nlo.git --branch dev_ui
 
-# Pull updates from the remote
-gh sync pull web-app
+# Pull updates from the remote (customize merge message with -m)
+gh sync pull web-app -m "Update from remote"
 
 # Push local changes back
 gh sync push web-app

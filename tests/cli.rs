@@ -189,3 +189,32 @@ fn remove_mapping() {
         .success()
         .stdout(predicate::str::contains("No mappings"));
 }
+
+#[test]
+fn push_executes_subtree_push() {
+    let repo = setup_repo();
+    let git_shim = fake_git_path(&repo);
+
+    let path_env = format!(
+        "{}:{}",
+        git_shim.parent().unwrap().display(),
+        std::env::var("PATH").unwrap()
+    );
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .assert()
+        .success();
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["push", "web-app"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("git subtree push"));
+}

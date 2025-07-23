@@ -5,7 +5,12 @@ use tempfile::tempdir;
 
 fn setup_repo() -> tempfile::TempDir {
     let dir = tempdir().unwrap();
-    fs::create_dir(dir.path().join(".git")).unwrap(); // 疑似リポジトリ
+    // 実際に git init して最低限のリポジトリを用意
+    std::process::Command::new("/usr/bin/git")
+        .arg("init")
+        .current_dir(dir.path())
+        .output()
+        .expect("git init");
     dir
 }
 
@@ -14,7 +19,7 @@ fn fake_git_path(dir: &tempfile::TempDir) -> std::path::PathBuf {
     let shim = dir.path().join("git");
     fs::write(
         &shim,
-        "#!/usr/bin/env sh\n# pretend success\necho git \"$@\"\n",
+        "#!/usr/bin/env sh\nif [ \"$1\" = \"config\" ]; then\n    /usr/bin/git \"$@\"\nelse\n    echo git \"$@\"\nfi\n",
     )
     .unwrap();
     #[cfg(unix)]
@@ -31,7 +36,9 @@ fn fake_git_fail_pull(dir: &tempfile::TempDir) -> std::path::PathBuf {
     fs::write(
         &shim,
         r#"#!/usr/bin/env sh
-if [ "$1" = "remote" ] && [ "$2" = "get-url" ]; then
+if [ "$1" = "config" ]; then
+    /usr/bin/git "$@"
+elif [ "$1" = "remote" ] && [ "$2" = "get-url" ]; then
     exit 1
 elif [ "$1" = "subtree" ] && [ "$2" = "pull" ]; then
     echo >&2 "hint: use 'git subtree add'"

@@ -1,6 +1,6 @@
 # gh-sync
 
-Synchronize a subdirectory of your repository with an external repository using a simple GitHub CLI extension. gh-sync wraps `git subtree` so that you can easily pull and push changes while keeping track of the mapping in `.gh-sync.json`.
+Synchronize a subdirectory of your repository with an external repository using a simple GitHub CLI extension. gh-sync wraps `git subtree` so that you can easily pull and push changes while keeping track of the mapping in your Git configuration.
 
 ## Features
 
@@ -39,7 +39,7 @@ gh sync push web-app
 gh sync list
 ```
 
-A `.gh-sync.json` file will be created in your repository root to store mappings. Multiple subdirectories can be managed.
+Mappings are stored in your repository's Git configuration under the `gh-sync` prefix. Multiple subdirectories can be managed.
 
 ## License
 

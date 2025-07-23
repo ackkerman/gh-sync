@@ -25,6 +25,32 @@ fn fake_git_path(dir: &tempfile::TempDir) -> std::path::PathBuf {
     shim
 }
 
+/// `git subtree pull` を失敗させ、add へフォールバックさせるためのシム
+fn fake_git_fail_pull(dir: &tempfile::TempDir) -> std::path::PathBuf {
+    let shim = dir.path().join("git");
+    fs::write(
+        &shim,
+        r#"#!/usr/bin/env sh
+if [ "$1" = "remote" ] && [ "$2" = "get-url" ]; then
+    exit 1
+elif [ "$1" = "subtree" ] && [ "$2" = "pull" ]; then
+    echo >&2 "hint: use 'git subtree add'"
+    exit 1
+else
+    echo git "$@"
+    exit 0
+fi
+"#,
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&shim, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    shim
+}
+
 #[test]
 fn connect_and_list_roundtrip() {
     let repo = setup_repo();
@@ -58,4 +84,33 @@ fn connect_and_list_roundtrip() {
         .assert()
         .success()
         .stdout(predicate::str::contains("web-app"));
+}
+
+#[test]
+fn pull_falls_back_to_add() {
+    let repo = setup_repo();
+    let git_shim = fake_git_fail_pull(&repo);
+
+    let path_env = format!(
+        "{}:{}",
+        git_shim.parent().unwrap().display(),
+        std::env::var("PATH").unwrap()
+    );
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["connect", "web-app", "git@github.com:a/b.git"])
+        .assert()
+        .success();
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .args(&["pull", "web-app"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("subtree add"));
 }

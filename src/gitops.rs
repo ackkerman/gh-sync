@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use std::{path::Path, process::Command};
+use std::{path::Path, process::Command, process::Output};
 
 /// git コマンドを実行して成功コードを保証
 fn run(repo: &Path, args: &[&str]) -> Result<()> {
@@ -14,6 +14,16 @@ fn run(repo: &Path, args: &[&str]) -> Result<()> {
     } else {
         Err(anyhow!("git {:?} exited with {}", args, status))
     }
+}
+
+/// git コマンドを実行して Output を返す
+fn run_output(repo: &Path, args: &[&str]) -> Result<Output> {
+    let out = Command::new("git")
+        .args(args)
+        .current_dir(repo)
+        .output()
+        .with_context(|| format!("failed to spawn git {:?}", args))?;
+    Ok(out)
 }
 
 /// `git remote add|get-url|set-url` 相当
@@ -39,12 +49,40 @@ pub fn fetch(repo: &Path, remote: &str, branch: &str) -> Result<()> {
 }
 
 pub fn subtree_pull(repo: &Path, prefix: &str, remote: &str, branch: &str) -> Result<()> {
-    run(
+    let out = run_output(
         repo,
         &[
-            "subtree", "pull", "--prefix", prefix, remote, branch, "--squash",
+            "subtree",
+            "pull",
+            "--prefix",
+            prefix,
+            remote,
+            branch,
+            "--squash",
         ],
-    )
+    )?;
+
+    if out.status.success() {
+        Ok(())
+    } else if String::from_utf8_lossy(&out.stderr).contains("use 'git subtree add'") {
+        run(
+            repo,
+            &[
+                "subtree",
+                "add",
+                "--prefix",
+                prefix,
+                remote,
+                branch,
+                "--squash",
+            ],
+        )
+    } else {
+        Err(anyhow!(
+            "git subtree pull failed: {}",
+            String::from_utf8_lossy(&out.stderr)
+        ))
+    }
 }
 
 pub fn subtree_push(repo: &Path, prefix: &str, remote: &str, branch: &str) -> Result<()> {

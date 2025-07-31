@@ -6,7 +6,7 @@ Synchronize a subdirectory of your repository with an external repository using 
 
 - **connect** – register a subdirectory ↔ remote URL mapping
 - **pull** – fetch from the remote and update the subtree (supports `-m` for merge message)
-- **push** – push local changes in the subtree back to the remote
+- **push** – push local changes in the subtree back to the remote (supports `-m` for commit message)
 - **list** – show current mappings
 - **remove** – delete a mapping
 
@@ -36,7 +36,7 @@ gh sync connect web-app git@github.com:ackkerman/nlo.git --branch dev_ui
 gh sync pull web-app -m "Update from remote"
 
 # Push local changes back
-gh sync push web-app
+gh sync push web-app -m "Sync subtree"
 
 # View mappings
 gh sync list

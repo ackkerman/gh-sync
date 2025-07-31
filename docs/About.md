@@ -8,8 +8,8 @@ gh-sync is a lightweight CLI tool for synchronizing a subdirectory of one Git re
   Register a mapping between a local subdirectory and a remote repository/branch.
 - `pull <subdir> [--branch <name>] [-m <message>]`
   Fetch from the configured remote and update the subtree using the given merge commit message.
-- `push <subdir> [--branch <name>]`  
-  Push local changes in the subtree back to the remote.
+- `push <subdir> [--branch <name>] [-m <message>]`
+  Push local changes in the subtree back to the remote using the provided commit message.
 - `remove <subdir>`  
   Delete the mapping from Git config.
 - `list`  
@@ -27,7 +27,7 @@ gh sync connect web-app git@github.com:example/remote.git --branch main
 gh sync pull web-app -m "Update from remote"
 
 # Push local updates back
-gh sync push web-app
+gh sync push web-app -m "Sync subtree"
 
 # Remove mapping
 gh sync remove web-app

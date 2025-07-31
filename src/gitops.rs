@@ -82,9 +82,17 @@ pub fn subtree_pull(
     }
 }
 
-pub fn subtree_push(repo: &Path, prefix: &str, remote: &str, branch: &str) -> Result<()> {
-    run(
-        repo,
-        &["subtree", "push", "--prefix", prefix, remote, branch],
-    )
+pub fn subtree_push(
+    repo: &Path,
+    prefix: &str,
+    remote: &str,
+    branch: &str,
+    message: Option<&str>,
+) -> Result<()> {
+    let mut args = vec!["subtree", "push", "--prefix", prefix, remote, branch];
+    if let Some(m) = message {
+        args.push("-m");
+        args.push(m);
+    }
+    run(repo, &args)
 }

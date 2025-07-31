@@ -41,6 +41,9 @@ enum Commands {
         subdir: String,
         #[arg(short, long)]
         branch: Option<String>,
+        /// message for subtree push
+        #[arg(short, long)]
+        message: Option<String>,
     },
     /// SUBDIR のマッピングを削除
     Remove { subdir: String },
@@ -92,7 +95,11 @@ fn run() -> Result<()> {
             println!("Connected {subdir} ↔ {remote_url} ({branch})");
         }
 
-        Commands::Pull { subdir, branch, message } => {
+        Commands::Pull {
+            subdir,
+            branch,
+            message,
+        } => {
             let m = cfg
                 .mappings
                 .get(&subdir)
@@ -104,13 +111,17 @@ fn run() -> Result<()> {
             println!("Pulled {subdir} from {}/{}", m.remote, branch);
         }
 
-        Commands::Push { subdir, branch } => {
+        Commands::Push {
+            subdir,
+            branch,
+            message,
+        } => {
             let m = cfg
                 .mappings
                 .get(&subdir)
                 .with_context(|| format!("{subdir} not connected"))?;
             let branch = branch.unwrap_or_else(|| m.branch.clone());
-            subtree_push(&repo, &m.subdir, &m.remote, &branch)?;
+            subtree_push(&repo, &m.subdir, &m.remote, &branch, message.as_deref())?;
             println!("Pushed {subdir} to {}/{}", m.remote, branch);
         }
 

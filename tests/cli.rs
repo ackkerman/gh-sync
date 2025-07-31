@@ -125,11 +125,7 @@ fn pull_falls_back_to_add() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&[
-            "connect",
-            "app",
-            "git@github.com:a/b.gitt",
-        ])
+        .args(&["connect", "app", "git@github.com:a/b.gitt"])
         .assert()
         .success();
 
@@ -157,11 +153,7 @@ fn pull_with_custom_message() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&[
-            "connect",
-            "app",
-            "git@github.com:a/b.gitt",
-        ])
+        .args(&["connect", "app", "git@github.com:a/b.gitt"])
         .assert()
         .success();
 
@@ -171,6 +163,33 @@ fn pull_with_custom_message() {
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
         .args(&["pull", "app", "-m", "custom"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("-m custom"));
+}
+
+#[test]
+fn push_with_custom_message() {
+    let repo = setup_repo();
+    let git_shim = fake_git_path(&repo);
+
+    let (path_env, orig_path) = path_vars(&git_shim);
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .env("ORIG_PATH", &orig_path)
+        .args(&["connect", "app", "git@github.com:a/b.gitt"])
+        .assert()
+        .success();
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .env("ORIG_PATH", &orig_path)
+        .args(&["push", "app", "-m", "custom"])
         .assert()
         .success()
         .stdout(predicate::str::contains("-m custom"));
@@ -188,11 +207,7 @@ fn remove_mapping() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&[
-            "connect",
-            "app",
-            "git@github.com:a/b.gitt",
-        ])
+        .args(&["connect", "app", "git@github.com:a/b.gitt"])
         .assert()
         .success();
 

@@ -96,7 +96,7 @@ fn connect_and_list_roundtrip() {
         .args(&[
             "connect",
             "app",
-            "git@github.com:a/b.gitt",
+            "git@github.com:a/b.git",
             "--branch",
             "dev_ui",
         ])
@@ -155,7 +155,7 @@ fn pull_falls_back_to_add() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&["connect", "app", "git@github.com:a/b.gitt"])
+        .args(&["connect", "app", "git@github.com:a/b.git"])
         .assert()
         .success();
 
@@ -183,7 +183,7 @@ fn pull_with_custom_message() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&["connect", "app", "git@github.com:a/b.gitt"])
+        .args(&["connect", "app", "git@github.com:a/b.git"])
         .assert()
         .success();
 
@@ -210,7 +210,7 @@ fn push_with_custom_message() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&["connect", "app", "git@github.com:a/b.gitt"])
+        .args(&["connect", "app", "git@github.com:a/b.git"])
         .assert()
         .success();
 
@@ -237,7 +237,7 @@ fn remove_mapping() {
         .current_dir(repo.path())
         .env("PATH", &path_env)
         .env("ORIG_PATH", &orig_path)
-        .args(&["connect", "app", "git@github.com:a/b.gitt"])
+        .args(&["connect", "app", "git@github.com:a/b.git"])
         .assert()
         .success();
 

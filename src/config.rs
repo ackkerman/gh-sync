@@ -36,12 +36,8 @@ impl Config {
 
         for line in stdout.lines() {
             if let Some((key, value)) = line.split_once(' ') {
-                let mut parts = key.split('.');
-                if parts.next() != Some(CONFIG_PREFIX) {
-                    continue;
-                }
-                if let Some(name) = parts.next() {
-                    if let Some(field) = parts.next() {
+                if let Some(rem) = key.strip_prefix(&format!("{CONFIG_PREFIX}.")) {
+                    if let Some((name, field)) = rem.rsplit_once('.') {
                         let entry =
                             cfg.mappings
                                 .entry(name.to_string())

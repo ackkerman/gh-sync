@@ -114,6 +114,36 @@ fn connect_and_list_roundtrip() {
 }
 
 #[test]
+fn dotted_subdir_and_remote() {
+    let repo = setup_repo();
+    let git_shim = fake_git_path(&repo);
+
+    let (path_env, orig_path) = path_vars(&git_shim);
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .env("ORIG_PATH", &orig_path)
+        .args(&[
+            "connect",
+            "tools/automaton.x",
+            "git@github.com:a/automaton.x.git",
+        ])
+        .assert()
+        .success();
+
+    Command::cargo_bin("gh-sync")
+        .unwrap()
+        .current_dir(repo.path())
+        .env("PATH", &path_env)
+        .env("ORIG_PATH", &orig_path)
+        .args(&["pull", "tools/automaton.x"])
+        .assert()
+        .success();
+}
+
+#[test]
 fn pull_falls_back_to_add() {
     let repo = setup_repo();
     let git_shim = fake_git_fail_pull(&repo);
